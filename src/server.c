@@ -50,33 +50,48 @@
  */
 int send_response(int fd, char *header, char *content_type, void *body, int content_length)
 {
+    printf("%s\n", body);
     const int max_response_size = 262144;
     char response[max_response_size];
 
-    time_t rawtime;
-    struct tm *info;
-    char buffer[80];
-    time(&rawtime);
-    info = localtime(&rawtime);
-    // printf("date: %s", asctime(info));
-    // str format time
-    strftime(buffer, 80, "%c", info);
-    // printf("date: %s\n", buffer);
+    // time_t rawtime;
+    // struct tm *info;
+    // char buffer[80];
+    // time(&rawtime);
+    // info = localtime(&rawtime);
+    // // printf("date: %s", asctime(info));
+    // // str format time
+    // strftime(buffer, 80, "%c", info);
+    // // printf("date: %s\n", buffer);
 
-    // Build HTTP response and store it in response
+    // // Build HTTP response and store it in response
+    // int response_length = sprintf(response,
+    //                               "%s\n, Date: %s\n, Content-Type: %s\n,  Content-Length: %d\n,  Connection: close\n, %s\n",
+    //                               header,
+    //                               buffer,
+    //                               content_type,
+    //                               content_length,
+    //                               body);
+    // ///////////////////
+    // // IMPLEMENT ME! //
+    // ///////////////////
+
+    // // Send it all!
+    // int rv = send(fd, response, response_length, 0);
+    time_t t = time(NULL);
     int response_length = sprintf(response,
-                                  "%s\n, Date: %s\n, Content-Type: %s\n,  Content-Length: %d\n,  Connection: close\n, %s\n",
+                                  "%s\n"
+                                  "Date: %s"
+                                  "Connection: close\n"
+                                  "Content-Length: %d\n"
+                                  "Content-Type: %s\n"
+                                  "\n",
                                   header,
-                                  buffer,
-                                  content_type,
+                                  asctime(gmtime(&t)),
                                   content_length,
-                                  body);
-    ///////////////////
-    // IMPLEMENT ME! //
-    ///////////////////
-
-    // Send it all!
-    int rv = send(fd, response, response_length, 0);
+                                  content_type);
+    memcpy(response + response_length, body, content_length);
+    int rv = send(fd, response, response_length + content_length, 0);
 
     if (rv < 0)
     {
@@ -142,6 +157,24 @@ void get_file(int fd, struct cache *cache, char *request_path)
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
+    char filepath[4096];
+    struct file_data *filedata;
+    // construct full file path
+    // sprintf(filepath,"%s/%s", SERVER_ROOT, request_path);
+    snprintf(filepath, sizeof filepath, "%s/%s", SERVER_ROOT, request_path);
+    filedata = file_load(filepath);
+    // check to see if file_load returned a valid file
+    if (filedata == NULL)
+    {
+        resp_404(fd);
+        return;
+    }
+    char *mime_type = mime_type_get(filepath);
+    // we fetched a valid file
+    // make sure we send it
+    send_response(fd, "HTTP/1.1 200 OK", mime_type, filedata->data, filedata->size);
+    // free the file data struct after it's been sent
+    file_free(filedata);
 }
 
 /**
@@ -178,42 +211,59 @@ void handle_http_request(int fd, struct cache *cache)
     // IMPLEMENT ME! //
     ///////////////////
 
-    // printf("%s\n", request);
-    // buffer to hold the method
-    char method[200];
-    // buffer to hold the path
-    char path[8192];
+    // // printf("%s\n", request);
+    // // buffer to hold the method
+    // char method[200];
+    // // buffer to hold the path
+    // char path[8192];
 
-    // Read the three components of the first request line
-    // expects const char *str, const char format
-    sscanf(request, "%s %s", method, path);
-    printf("method: %s\npath: %s\n", method, path);
+    // // Read the three components of the first request line
+    // // expects const char *str, const char format
+    // sscanf(request, "%s %s", method, path);
+    // printf("method: %s\npath: %s\n", method, path);
 
-    // If GET, handle the get endpoints
-    if (strcmp(method, "GET") == 0)
+    // // If GET, handle the get endpoints
+    // if (strcmp(method, "GET") == 0)
+    // {
+    //     //    Check if it's /d20 and handle that special case
+    //     // check to see if path is /d20
+    //     if (strcmp(path, "/d20") == 0)
+    //     {
+    //         // handle special case
+    //         get_d20(fd);
+    //     }
+    //     // otherwise serve requested file
+    //     else
+    //     {
+    //         //    Otherwise serve the requested file by calling get_file()
+    //         // call get file, expects fd, cache and
+    //         get_file(fd, cache, path);
+    //     }
+    // }
+    // // if method not get, this duplicates, but gives date, recheck
+    // else
+    // {
+    //     // call 404 page
+    //     resp_404(fd);
+    // }
+    char request_type[8];
+    char request_path[1024];
+    sscanf(request, "%s %s", request_type, request_path);
+    printf("REQUEST: %s %s\n", request_type, request_path);
+    if (strcmp(request_type, "GET") == 0)
     {
-        //    Check if it's /d20 and handle that special case
-        // check to see if path is /d20
-        if (strcmp(path, "/d20") == 0)
+
+        if (strcmp(request_path, "/d20") == 0)
         {
-            // handle special case
             get_d20(fd);
         }
-        // otherwise serve requested file
         else
         {
-            //    Otherwise serve the requested file by calling get_file()
-            // call get file, expects fd, cache and
-            get_file(fd, cache, path);
+            get_file(fd, cache, request_path);
         }
     }
-    // if method not get, this duplicates, but gives date, recheck
-    else
-    {
-        // call 404 page
-        resp_404(fd);
-    }
-    // (Stretch) If POST, handle the post request
+    // resp_404(fd);
+    // // (Stretch) If POST, handle the post request
 }
 
 /**
