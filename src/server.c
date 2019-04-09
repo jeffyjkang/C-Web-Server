@@ -65,12 +65,12 @@ int send_response(int fd, char *header, char *content_type, void *body, int cont
 
     // Build HTTP response and store it in response
     int response_length = sprintf(response,
-                                  "%s\n, Date: %s\n, Content-Type: %s\n, Content-Body: %s\n, Content-Length: %d\n,  Connection: close\n, \n",
+                                  "%s\n, Date: %s\n, Content-Type: %s\n,  Content-Length: %d\n,  Connection: close\n, %s\n",
                                   header,
                                   buffer,
                                   content_type,
-                                  body,
-                                  content_length);
+                                  content_length,
+                                  body);
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
@@ -93,12 +93,12 @@ void get_d20(int fd)
 {
     // Generate a random number between 1 and 20 inclusive
     char body[20];
-    int rand_num = rand() % 20 + 1;
+    int rand_num = (rand() % 20) + 1;
     sprintf(body, "%d", rand_num);
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
-
+    // printf("%s\n", body);
     // Use send_response() to send it back as text/plain data
     // expects fd, header, content type, body, content length
     send_response(fd, "HTTP/1.1 200 OK", "text/plain", body, strlen(body));
