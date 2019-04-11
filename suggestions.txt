@@ -1,0 +1,28 @@
+cache.c/h : where the cache that we'll implement in part 2 lives
+hashtable.c/h: hashtable implementation that the cache will use
+llist.c/h: linked list implementation that the cache will use
+
+//
+
+file.c/h: contains the file_load and file_free functions for reading a file from disk into memory as well as freeing that memory when we're done with the file data
+
+mime.c/h: contains the mime_type_get takes a file name and figures out the file's mime type
+
+net.c/h: contains the get-listener_socket function, call to initialize a socket for the web server to send and recieve data through
+
+server.c: contains the actual web server node
+
+1. listens for connections
+2. when a connection arrives, receive the request data
+3. parse the request data
+4. build the response
+5. send the response
+6. close the connection and continue waiting for more requests
+
+recommended way of implementation:
+
+1. implement send_response
+2. test your send_response by calling the response 404 function
+   replace handle_http_request with the get 404
+3. once you know your server is correctly sending responses, you can start to implement some of the other methods, get_d20 and get_file
+   test with curl command or use the browser if you have the server up and running
