@@ -14,10 +14,22 @@ struct cache_entry *alloc_entry(char *path, char *content_type, void *content, i
     ///////////////////
     // create new cache entry with memory allocation space enough for struct cache_entry
     struct cache_entry *entry = malloc(sizeof(struct cache_entry));
-    entry->path = path;
-    entry->content_type = content_type;
-    entry->content = content;
+    // entry->path = path;
+    // entry->content_type = content_type;
+    // entry->content = content;
+    // entry->content_length = content_length;
+    // return entry;
+    // entry->path = malloc(strlen(path) + 1);
+    // strcpy(entry->path, path);
+    // entry->content_type = malloc(strlen(content_type) + 1);
+    // strcpy(entry->content_type, content_type);
+    entry->path = strdup(path);
+    entry->content_type = strdup(content_type);
+    entry->content = malloc(content_length);
+    memcpy(entry->content, content, content_length);
     entry->content_length = content_length;
+    // entry->next = NULL;
+    // entry->prev = NULL;
     return entry;
 }
 
@@ -151,15 +163,15 @@ void cache_put(struct cache *cache, char *path, char *content_type, void *conten
     // IMPLEMENT ME! //
     ///////////////////
     struct cache_entry *entry = alloc_entry(path, content_type, content, content_length);
-    dllist_move_to_head(cache, entry);
-    hashtable_put(cache->index, path, content);
+    dllist_insert_head(cache, entry);
+    hashtable_put(cache->index, entry->path, &entry->path);
     cache->cur_size++;
     if (cache->cur_size > cache->max_size)
     {
         struct cache_entry *remove = dllist_remove_tail(cache);
-        hashtable_delete(cache->index, remove);
+        hashtable_delete(cache->index, remove->path);
         free_entry(remove);
-        cache->cur_size--;
+        // cache->cur_size--;
     }
 }
 

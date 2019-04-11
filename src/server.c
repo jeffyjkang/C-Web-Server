@@ -170,11 +170,22 @@ void get_file(int fd, struct cache *cache, char *request_path)
         return;
     }
     char *mime_type = mime_type_get(filepath);
-    // we fetched a valid file
-    // make sure we send it
-    send_response(fd, "HTTP/1.1 200 OK", mime_type, filedata->data, filedata->size);
-    // free the file data struct after it's been sent
-    file_free(filedata);
+
+    // cache
+    struct cache_entry *entry = cache_get(cache, request_path);
+    if (entry != NULL)
+    {
+        send_response(fd, "HTTP/1.1 200 OK", entry->content_type, entry->content, entry->content_length);
+    }
+    else
+    {
+        cache_put(cache, request_path, mime_type, filedata->data, filedata->size);
+        // we fetched a valid file
+        // make sure we send it
+        send_response(fd, "HTTP/1.1 200 OK", mime_type, filedata->data, filedata->size);
+        // free the file data struct after it's been sent
+        file_free(filedata);
+    }
 }
 
 /**
